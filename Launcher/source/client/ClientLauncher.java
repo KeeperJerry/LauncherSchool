@@ -119,8 +119,11 @@ public final class ClientLauncher
             args.add(jvmProperty("os.version", "10.0"));
         }
 
+
         // Add classpath and main class
         Collections.addAll(args, profile.object.getJvmArgs());
+        if (JVMHelper.OS_TYPE == OS.MACOSX)
+            Collections.addAll(args, "-XstartOnFirstThread");
         Collections.addAll(args, "-classpath", IOHelper.getCodeSource(ClientLauncher.class).toString(), ClientLauncher.class.getName());
         args.add(paramsFile.toString()); // Add params file path to args
 
@@ -284,10 +287,6 @@ public final class ClientLauncher
         { // Just to show it in debug screen
             Collections.addAll(args, "--versionType", "KJ-Launcher v" + Launcher.VERSION);
         }
-
-        // Fix `-XstartOnFirstThread` in MacOS
-        if (version.compareTo(Version.MC1132) >= 0 && JVMHelper.OS_TYPE == OS.MACOSX)
-            Collections.addAll(args, "-XstartOnFirstThread");
 
         // Add server args
         if (params.autoEnter)
@@ -479,4 +478,4 @@ public final class ClientLauncher
     }
 }
 
-// Н@хуя это здесь? *facepam*
+// Н@хуя это здесь? *facepam* А главное зачем?
