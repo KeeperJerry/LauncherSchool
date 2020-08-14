@@ -122,7 +122,8 @@ public final class ClientLauncher
 
         // Add classpath and main class
         Collections.addAll(args, profile.object.getJvmArgs());
-        if (JVMHelper.OS_TYPE == OS.MACOSX)
+        Version v = profile.object.getVersion();
+        if (v.compareTo(Version.MC1132) >= 0 && JVMHelper.OS_TYPE == OS.MACOSX)
             Collections.addAll(args, "-XstartOnFirstThread");
         Collections.addAll(args, "-classpath", IOHelper.getCodeSource(ClientLauncher.class).toString(), ClientLauncher.class.getName());
         args.add(paramsFile.toString()); // Add params file path to args
@@ -478,4 +479,4 @@ public final class ClientLauncher
     }
 }
 
-// Н@хуя это здесь? *facepam* А главное зачем?
+// Н@хуя это здесь? *facepam* И главное нахуя?
