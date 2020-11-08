@@ -21,6 +21,7 @@ import launcher.helper.SecurityHelper;
 import launcher.request.auth.CheckServerRequest;
 import launcher.request.auth.JoinServerRequest;
 import launcher.request.uuid.ProfileByUUIDRequest;
+import com.mojang.authlib.Environment;
 
 import java.net.InetAddress;
 import java.util.Base64;
@@ -39,9 +40,9 @@ public class YggdrasilMinecraftSessionService extends BaseMinecraftSessionServic
         LogHelper.debug("Patched MinecraftSessionService created");
     }
 
-    public YggdrasilMinecraftSessionService(YggdrasilAuthenticationService service)
-    {
-        this((AuthenticationService) service);
+    public YggdrasilMinecraftSessionService(AuthenticationService service, Environment environment) {
+        super(service);
+        LogHelper.debug("Patched MinecraftSessionService created");
     }
 
     public static void fillTextureProperties(GameProfile profile, PlayerProfile pp)

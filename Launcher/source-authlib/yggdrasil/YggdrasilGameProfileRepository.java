@@ -8,37 +8,27 @@ import launcher.client.PlayerProfile;
 import launcher.helper.LogHelper;
 import launcher.helper.VerifyHelper;
 import launcher.request.uuid.BatchProfileByUsernameRequest;
+import com.mojang.authlib.Environment;
 
 import java.util.Arrays;
 import java.util.UUID;
 
-public class YggdrasilGameProfileRepository implements GameProfileRepository
-{
+public class YggdrasilGameProfileRepository implements GameProfileRepository {
     private static final long BUSY_WAIT_MS = VerifyHelper.verifyLong(
-            Long.parseLong(System.getProperty("launcher.authlib.busyWait", Long.toString(100L))),
-            VerifyHelper.L_NOT_NEGATIVE, "launcher.authlib.busyWait can't be < 0");
+            Long.parseLong(System.getProperty("launcher.com.mojang.authlib.busyWait", Long.toString(100L))),
+            VerifyHelper.L_NOT_NEGATIVE, "launcher.com.mojang.authlib.busyWait can't be < 0");
     private static final long ERROR_BUSY_WAIT_MS = VerifyHelper.verifyLong(
-            Long.parseLong(System.getProperty("launcher.authlib.errorBusyWait", Long.toString(500L))),
-            VerifyHelper.L_NOT_NEGATIVE, "launcher.authlib.errorBusyWait can't be < 0");
+            Long.parseLong(System.getProperty("launcher.com.mojang.authlib.errorBusyWait", Long.toString(500L))),
+            VerifyHelper.L_NOT_NEGATIVE, "launcher.com.mojang.authlib.errorBusyWait can't be < 0");
 
-    public YggdrasilGameProfileRepository()
-    {
+    public YggdrasilGameProfileRepository(YggdrasilAuthenticationService service, Environment environment) {
         LogHelper.debug("Patched GameProfileRepository created");
     }
 
-    public YggdrasilGameProfileRepository(YggdrasilAuthenticationService authenticationService)
-    {
-        this();
-    }
-
-    private static void busyWait(long ms)
-    {
-        try
-        {
+    private static void busyWait(long ms) {
+        try {
             Thread.sleep(ms);
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             LogHelper.error(e);
         }
     }
