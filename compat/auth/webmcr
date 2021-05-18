@@ -10,8 +10,16 @@ header("Content-Type: text/plain; charset=UTF-8");
 if (config::$settings['tech_work'] == true) {
     die(messages::$msg['tech_work']);
 }
-$login = str_replace(' ', '', $_GET['login']);
-$pass = $_GET['password'];
+
+$login = '';
+$pass = '';
+
+if(isset($_GET['login'])) {
+    $login = str_replace(' ', '', $_GET['login']);
+}
+if(isset($_GET['password'])) {
+    $pass = $_GET['password'];
+}
 
 class config
 {
