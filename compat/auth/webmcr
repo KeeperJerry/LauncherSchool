@@ -23,7 +23,7 @@ class config
         "db_db" => '', // Имя базы данных сайта
         "un_tpl" => '([a-zA-Z0-9\_\-]+)', // Проверка на Regexp
         "debug_mysql" => false, // Проверка на ошибки MySQL. Сохранение в файл debug.log !!! Не устанавливайте true навсегда и не забудьте после настройки удалить файл debug.log из папки
-        "tech_work" => false //Техработы 
+        "tech_work" => false //Техработы
     );
     //Настройка названия таблицы, колонок и permission
     static $table = array(
@@ -32,7 +32,6 @@ class config
         "wmcr_user" => "login", // Название колонки пользователя
         "wmcr_email" => "email", // Название колонки email
         "wmcr_pass" => "password", // Название колонки password
-        "wmcr_permission_column" => '', // Удалите целиком, оставив '' или исправьте название колонки для прав лаунчера. Будьте внимательны с названием колонки, s на конце есть или нет в БД.
     );
     public static $mainDB = null;
     public static function initMainDB()
@@ -83,40 +82,55 @@ function rgxp_valid($var)
 function auth($login)
 {
     config::initMainDB();
-    if (exists(config::$table['wmcr_permission_column'])) {
-        $perm = ",`" . config::$table['wmcr_permission_column'] . "`";
-    }
     $tn = config::$table['wmcr_tn'];
     $cl_user = config::$table['wmcr_user'];
     $email = config::$table['wmcr_email'];
     $password = config::$table['wmcr_pass'];
-    $qr = config::$mainDB->query("SELECT `" . $cl_user . "`,$password" . $perm . " FROM " . $tn . " WHERE ($email=? OR `" . $cl_user . "`=?) LIMIT 1", "ss", $login, $login)->fetch_assoc();
+    $qr = config::$mainDB->query("SELECT `" . $cl_user . "`,$password" . ",salt FROM " . $tn . " WHERE ($email=? OR `" . $cl_user . "`=?) LIMIT 1", "ss", $login, $login)->fetch_assoc();
     if (!isset($qr[$password]) && !isset($qr[$cl_user])) {
         die(messages::$msg['player_not_found']);
     }
     $user = $qr[$cl_user];
-    if (isset($qr[config::$table['wmcr_permission_column']])) {
-        $permissions = $qr[config::$table['wmcr_permission_column']];
-    } else {
-        $permissions = 0;
-    }
-    pass_valid($user, $qr[$password], $permissions);
+    
+    pass_valid($user, $qr[$password], $qr['salt']);
 }
-function pass_valid($user, $pass_check, $permissions)
+function pass_valid($user, $pass_check, $salt)
 {
     global $pass;
-    $check = explode(":", $pass_check);
-    $salt = isset($check[1]) ? $check[1] : '';
-    $pass_check = $check[0];
-    $passMS = md5($pass . $salt);
-    $passDMS = md5(md5($pass . $salt));
-    $passMDS = md5(md5($pass) . $salt);
+    $i = 1;
+    $generations = array(
+        sha1($pass),
+        hash('sha256', $pass),
+        hash('sha512', $pass),
+        md5(md5($pass)),
+        md5($pass.$salt), // Joomla
+        md5($salt.$pass), // osCommerce, TBDev
+        md5(md5($salt).$pass), // vBulletin, IceBB, Discuz
+        md5(md5($pass).$salt),
+        md5($pass.md5($salt)),
+        md5($salt.md5($pass)),
+        sha1($pass.$salt),
+        sha1($salt.$pass),
+        md5(md5($salt).md5($pass)), // ipb, MyBB
+        hash('sha256', $pass.$salt),
+        hash('sha512', $pass.$salt),
+        md5($pass)
+    );
     
-    if (password_verify($pass, $pass_check) || $passMS === $pass_check || $passDMS === $pass_check || $passMDS === $pass_check) {
-        echo 'OK:' . $user;
-        exit;
-    } else {
-        die(messages::$msg['incorrect_pass']);
+    $genmodels = count($generations);
+    
+    foreach ($generations as $gen) {
+        $log = date('Y-m-d H:i:s') . $gen.' '.$pass_check;
+        file_put_contents(__DIR__ . '/log.txt', $log . PHP_EOL, FILE_APPEND);
+        if ($gen === $pass_check) {
+            echo 'OK:' . $user;
+            exit;
+        } else {
+            if ($i == $genmodels){
+                die(messages::$msg['incorrect_pass']);
+            }
+        }
+        $i++;
     }
 }
 function exists($var)
