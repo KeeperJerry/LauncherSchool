@@ -18,6 +18,7 @@ import launcher.serialize.HOutput;
 import launcher.serialize.signed.SignedObjectHolder;
 import launcher.serialize.stream.StreamObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.invoke.MethodHandle;
@@ -123,10 +124,21 @@ public final class ClientLauncher
         args.add(jvmProperty(JVMHelper.JAVA_LIBRARY_PATH, params.clientDir.resolve(NATIVES_DIR).toString()));
 
         // Add classpath and main class
-        Collections.addAll(args, profile.object.getJvmArgs());
+        for (String arg : profile.object.getJvmArgs()) {
+            // Replace classpath separator for current OS
+            if (arg.contains("${cp_separator}")) {
+                args.add(arg.replace("${cp_separator}", File.pathSeparator));
+            } else {
+                args.add(arg);
+            }
+        }
+        //Collections.addAll(args, profile.object.getJvmArgs());
+
         String v = profile.object.getVersion();
-        if (Version.compare(v, "1.13") >= 0 && JVMHelper.OS_TYPE == OS.MACOSX)
+
+        if (Version.compare(v, "1.13") >= 0 && JVMHelper.OS_TYPE == OS.MACOSX) {
             Collections.addAll(args, "-XstartOnFirstThread");
+        }
         Collections.addAll(args, "-classpath", IOHelper.getCodeSource(ClientLauncher.class).toString(), ClientLauncher.class.getName());
         args.add(paramsFile.toString()); // Add params file path to args
 
@@ -349,8 +361,7 @@ public final class ClientLauncher
 
         // Resolve main class and method
         Class<?> mainClass = Class.forName(profile.getMainClass());
-        MethodHandle mainMethod = JVMHelper.LOOKUP.findStatic(mainClass, "main", MethodType.methodType(void.class, String[].class))
-                .asFixedArity();
+        MethodHandle mainMethod = JVMHelper.LOOKUP.findStatic(mainClass, "main", MethodType.methodType(void.class, String[].class)).asFixedArity();
 
         // Invoke main method with exception wrapping
         LAUNCHED.set(true);
@@ -403,8 +414,7 @@ public final class ClientLauncher
         private final byte[] launcherSign;
 
         @LauncherAPI
-        public Params(byte[] launcherSign, Path assetDir, Path clientDir, PlayerProfile pp, String accessToken,
-                      boolean autoEnter, boolean fullScreen, int ram, int width, int height)
+        public Params(byte[] launcherSign, Path assetDir, Path clientDir, PlayerProfile pp, String accessToken, boolean autoEnter, boolean fullScreen, int ram, int width, int height)
         {
             this.launcherSign = launcherSign.clone();
 
